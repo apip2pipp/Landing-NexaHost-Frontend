@@ -1,0 +1,722 @@
+<html lang="en" class="scroll-smooth"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXAHOST | High Performance Cloud Infrastructure</title>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- GSAP & Lenis -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/@studio-freight/lenis@1.0.29/dist/lenis.min.js"></script>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+accent: '#3b82f6', /* Modified to Blue for Hosting vibe, or keep Orange if preferred. Let's keep Orange/Red for distinctiveness as requested to keep colors, but Blue is more 'hosting'. I will stick to the original Orange/Red accent to maintain the requested style strictness, but let's tweak it slightly to a 'System Blue' which is very Vercel/Hosting like. Actually, user said 'Keep colors... as much as possible'. I will revert to the original Orange Accent to ensure I follow "Keep colors... as much as possible". */
+accent: '#FF3B00',
+surface: '#0F0F0F',
+},
+fontFamily: {
+sans: ['Inter', 'sans-serif'],
+display: ['Space Grotesk', 'sans-serif'],
+mono: ['JetBrains Mono', 'monospace'],
+},
+animation: {
+'spin-slow': 'spin 15s linear infinite',
+'reverse-spin': 'spin 20s linear infinite reverse',
+'marquee': 'marquee 30s linear infinite',
+'scan': 'scan 4s linear infinite',
+'blink': 'blink 2s ease-in-out infinite',
+'dash': 'dash 20s linear infinite',
+'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+},
+keyframes: {
+marquee: {
+'0%': { transform: 'translateX(0)' },
+'100%': { transform: 'translateX(-33.333%)' },
+},
+scan: {
+'0%': { top: '-20%' },
+'100%': { top: '120%' },
+},
+blink: {
+'0%, 100%': { opacity: 1 },
+'50%': { opacity: 0.3 },
+},
+dash: {
+to: { 'stroke-dashoffset': '1000' }
+}
+}
+}
+}
+}
+</script>
+<style>
+/* --- CORE SETTINGS --- */
+html {
+background-color: #050505;
+}
+body {
+margin: 0; padding: 0;
+background-color: transparent;
+color: #e0e0e0;
+overflow-x: hidden;
+cursor: auto;
+}
+/* --- UTILS --- */
+.glass-panel {
+background: rgba(10, 10, 10, 0.8);
+backdrop-filter: blur(12px);
+border: 1px solid rgba(255,255,255,0.08);
+position: relative;
+overflow: hidden;
+}
+/* Spotlight Effect */
+.spotlight-card::before {
+content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+border-radius: inherit;
+background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.04), transparent 40%);
+z-index: 2; opacity: 0; transition: opacity 0.5s; pointer-events: none;
+}
+.spotlight-card:hover::before { opacity: 1; }
+.spotlight-card::after {
+content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+border-radius: inherit; padding: 1px;
+background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 59, 0, 0.3), transparent 40%);
+-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+-webkit-mask-composite: xor; mask-composite: exclude;
+z-index: 3; opacity: 0; transition: opacity 0.5s; pointer-events: none;
+}
+.spotlight-card:hover::after { opacity: 1; }
+.marquee-mask {
+mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+-webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.scan-line {
+position: absolute; left: 0; width: 100%; height: 50px;
+background: linear-gradient(to bottom, transparent, rgba(255, 59, 0, 0.3), transparent);
+opacity: 0.5; animation: scan 3s linear infinite; z-index: 10; pointer-events: none;
+}
+.noise-overlay {
+position: fixed; inset: 0; z-index: 9000; pointer-events: none; opacity: 0.04;
+background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+.btn-magnetic { display: inline-block; }
+.dot-grid {
+background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+background-size: 20px 20px;
+}
+.skew-target { will-change: transform; }
+</style></head>
+<body class="antialiased selection:bg-accent selection:text-white">
+
+    <!-- GLOBAL BACKDROP -->
+    <div class="fixed inset-0 bg-[#050505] -z-50"></div>
+
+    <!-- 3D BACKGROUND (Unicorn Studio) -->
+    <div class="aura-background-component fixed top-0 w-full h-screen -z-10" data-alpha-mask="80" style="mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent)">
+        <div class="aura-background-component top-0 w-full -z-10 absolute h-full">
+            <div data-us-project="NMlvqnkICwYYJ6lYb064" class="absolute w-full h-full left-0 top-0 -z-10"></div>
+            <script type="text/javascript">
+                !function(){if(!window.UnicornStudio){window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.29/dist/unicornStudio.umd.js",i.onload=function(){window.UnicornStudio.isInitialized||(UnicornStudio.init(),window.UnicornStudio.isInitialized=!0)},(document.head || document.body).appendChild(i)}}();
+            </script>
+        </div>
+    </div>
+
+    <!-- NOISE LAYER -->
+    <div class="noise-overlay"></div>
+    
+    <!-- NAVIGATION -->
+    <nav class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <a href="#" class="group hover-trigger">
+                <span class="font-display font-bold text-xl tracking-tighter text-white group-hover:text-accent transition-colors">NEXA<span class="text-accent group-hover:text-white transition-colors">HOST</span></span>
+            </a>
+            <div class="hidden md:flex gap-8 text-xs font-mono tracking-widest text-gray-400">
+                <a href="#features" class="hover:text-white transition-colors hover-trigger">[01] INFRASTRUCTURE</a>
+                <a href="#pricing" class="hover:text-white transition-colors hover-trigger">[02] SOLUTIONS</a>
+                <a href="#network" class="hover:text-white transition-colors hover-trigger">[03] NETWORK</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hidden lg:block text-[10px] font-mono text-green-500 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                    GRID ONLINE
+                </span>
+                <button class="border border-white/20 px-6 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-white hover:text-black transition-all hover-trigger btn-magnetic">
+                    Client Portal
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- HERO SECTION -->
+        <section class="skew-target relative h-screen w-full flex flex-col justify-center items-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505] z-10 pointer-events-none"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-[#050505] via-transparent to-[#050505] z-10 pointer-events-none"></div>
+
+            <div class="relative z-20 text-center max-w-5xl px-6">
+                <div class="inline-flex items-center gap-3 border border-white/10 bg-white/5 px-4 py-1.5 rounded-full mb-8 backdrop-blur-sm">
+                    <span class="font-mono text-[10px] text-accent tracking-widest uppercase">Region: US-EAST-N1 // 12ms Latency</span>
+                </div>
+                <h1 class="font-display font-bold text-6xl md:text-9xl tracking-tighter mb-6 leading-[0.9] text-white mix-blend-screen scramble-text">
+                    DEPLOY <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-400 to-gray-600">WITHOUT LIMITS</span>
+                </h1>
+                <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10 font-light">
+                    Premium bare metal and VPS infrastructure for mission-critical applications. <br>
+                    NVMe storage. 10Gbps Uplink. Instant Provisioning.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <button class="bg-accent text-black px-8 py-4 font-bold text-sm uppercase tracking-widest hover:bg-white transition-all hover-trigger w-full sm:w-auto btn-magnetic">
+                        Deploy Server
+                    </button>
+                    <button class="px-8 py-4 border border-white/20 text-white font-bold text-sm uppercase tracking-widest hover:bg-white/10 transition-all hover-trigger w-full sm:w-auto btn-magnetic">
+                        View Network
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MARQUEE -->
+        <div class="border-y border-white/5 bg-[#080808] py-8 relative z-20 overflow-hidden marquee-mask w-full">
+            <div class="flex whitespace-nowrap animate-marquee w-[max-content]">
+                <div class="flex gap-20 px-10 items-center">
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">DOCKER</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">KUBERNETES</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">UBUNTU</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">NODE.JS</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">POSTGRES</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">REDIS</span>
+                </div>
+                <div class="flex gap-20 px-10 items-center">
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">DOCKER</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">KUBERNETES</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">UBUNTU</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">NODE.JS</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">POSTGRES</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">REDIS</span>
+                </div>
+                <div class="flex gap-20 px-10 items-center">
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">DOCKER</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">KUBERNETES</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">UBUNTU</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">NODE.JS</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">POSTGRES</span>
+                    <span class="font-display font-bold text-2xl text-white/30 hover:text-white transition-colors">REDIS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- BENTO FEATURES -->
+        <section id="features" class="skew-target py-32 px-6 relative z-20">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-white/10 pb-8">
+                    <div>
+                        <span class="text-accent font-mono text-xs tracking-widest block mb-2">/// CORE HARDWARE</span>
+                        <h2 class="font-display font-bold text-white text-4xl md:text-5xl scramble-text">Metal Performance</h2>
+                    </div>
+                    <div class="text-right">
+                        <div class="flex items-center justify-end gap-2 mb-1">
+                            <span class="w-2 h-2 bg-green-500 rounded-full animate-blink"></span>
+                            <span class="font-mono text-xs text-white">CAPACITY: HEALTHY</span>
+                        </div>
+                        <p class="text-gray-500 font-mono text-xs uppercase tracking-widest">
+                            Active Instances: 12,492
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 grid-rows-3 gap-6 h-auto md:h-[900px]">
+                    <!-- Main Hardware Card -->
+                    <div class="md:col-span-2 md:row-span-2 glass-panel spotlight-card rounded-xl overflow-hidden relative group">
+                        <div class="scan-line"></div>
+                        <!-- Abstract tech background representing servers -->
+                        <img src="https://images.unsplash.com/photo-1558494949-efc535b5f479?q=80&amp;w=2074&amp;auto=format&amp;fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity group-hover:scale-105 transition-transform duration-700" alt="Server Rack">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                        <div class="absolute top-6 right-6 border border-white/20 bg-black/50 px-3 py-1 rounded text-[10px] font-mono text-accent">RACK_UNIT_04</div>
+                        <div class="absolute bottom-0 left-0 p-8 z-10 w-full">
+                            <div class="w-10 h-10 bg-accent flex items-center justify-center mb-4 text-black font-bold">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                            </div>
+                            <h3 class="font-display font-bold text-2xl text-white mb-2">Ryzen 9 Performance</h3>
+                            <p class="text-gray-300 text-sm max-w-sm">Dedicated CPU cores clocked at 5.7GHz. Unmatched single-thread performance.</p>
+                        </div>
+                    </div>
+
+                    <!-- Uptime -->
+                    <div class="md:col-span-1 md:row-span-1 glass-panel spotlight-card rounded-xl p-6 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <span class="font-mono text-[10px] text-gray-500 uppercase">Uptime SLA</span>
+                            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                        </div>
+                        <div class="text-center py-2">
+                            <div class="text-4xl font-display font-bold text-white counter" data-target="99.99">99.99</div>
+                            <div class="text-[10px] text-gray-500 mt-1">% Guaranteed</div>
+                        </div>
+                    </div>
+
+                    <!-- DDoS Protection -->
+                    <div class="md:col-span-1 md:row-span-1 glass-panel spotlight-card rounded-xl p-6 flex flex-col justify-between overflow-hidden">
+                        <div class="flex items-center gap-2 text-white mb-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span class="font-display font-bold text-sm">DDoS Shield</span>
+                        </div>
+                        <div class="relative h-12 overflow-hidden font-mono text-[9px] text-gray-600 leading-relaxed">
+                            <div class="animate-[marquee_5s_linear_infinite_reverse] flex flex-col">
+                                <span>BLOCKING_UDP_FLOOD</span>
+                                <span>FILTERING_PACKET_X</span>
+                                <span>MITIGATION_ACTIVE</span>
+                                <span>TRAFFIC_NORMALIZED</span>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-accent mt-2 flex items-center gap-1">
+                            <span class="w-1 h-1 bg-accent rounded-full"></span> ALWAYS ON
+                        </div>
+                    </div>
+
+                    <!-- Network Speed -->
+                    <div class="md:col-span-1 md:row-span-1 glass-panel spotlight-card rounded-xl p-6 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-mono text-[10px] text-gray-500 uppercase">Port Speed</span>
+                            <svg width="14" height="14" class="text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 2 13 9 20 9"></polyline><path d="M13 2a9 9 0 0 0-9 9v1a9 9 0 0 0 9 9h.3a8.99 8.99 0 0 0 9-8.7"></path></svg>
+                        </div>
+                        <div class="flex-grow flex items-center">
+                            <div class="w-full bg-white/10 h-16 rounded flex items-end px-1 gap-1">
+                                <div class="w-1/5 bg-accent/20 h-[40%] rounded-sm"></div>
+                                <div class="w-1/5 bg-accent/40 h-[60%] rounded-sm"></div>
+                                <div class="w-1/5 bg-accent/60 h-[30%] rounded-sm"></div>
+                                <div class="w-1/5 bg-accent/80 h-[80%] rounded-sm"></div>
+                                <div class="w-1/5 bg-accent h-[95%] rounded-sm"></div>
+                            </div>
+                        </div>
+                        <div class="text-right text-[10px] text-white font-mono mt-2">10 GBPS UPLINK</div>
+                    </div>
+
+                    <!-- Status / Firewall -->
+                    <div class="md:col-span-1 md:row-span-1 glass-panel spotlight-card rounded-xl p-6 relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-blue-900/5 z-0"></div>
+                        <div class="relative z-10 flex flex-col h-full justify-between">
+                            <div class="flex justify-between items-start">
+                                <span class="font-display font-bold text-sm text-white">Firewall</span>
+                                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse-fast"></div>
+                            </div>
+                            <div class="font-mono text-[10px] text-green-300/70">
+                                <div>&gt; RULES_LOADED</div>
+                                <div>&gt; PORT_22: FILTERED</div>
+                                <div>&gt; PORT_80: OPEN</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Storage -->
+                    <div class="md:col-span-2 md:row-span-1 glass-panel spotlight-card rounded-xl p-8 flex items-center justify-between hover-trigger">
+                         <div>
+                            <h3 class="font-display font-bold text-xl text-white mb-2">NVMe Storage</h3>
+                            <p class="text-gray-300 text-xs font-mono">Gen4 PCIe Raid 10 Arrays</p>
+                         </div>
+                         <div class="flex flex-col gap-1.5 w-40">
+                            <div class="flex justify-between text-[8px] text-gray-500 font-mono mb-1">
+                                <span>I/O SPEED</span>
+                                <span>7000 MB/s</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-accent to-yellow-500 w-[95%] rounded-full"></div>
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Global Map -->
+                    <div class="md:col-span-2 md:row-span-1 glass-panel spotlight-card rounded-xl p-6 relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute inset-0 dot-grid opacity-30"></div>
+                        <div class="flex justify-between items-center mb-2 z-10 absolute top-6 left-6 right-6">
+                            <span class="font-display font-bold text-white text-lg">Global Edge</span>
+                            <span class="text-accent text-xs font-mono border border-accent/30 px-2 py-0.5 rounded">24 LOCATIONS</span>
+                        </div>
+                        <div class="relative w-full h-full z-0 mt-8 opacity-60">
+                            <div class="absolute top-[30%] left-[20%] w-1.5 h-1.5 bg-white rounded-full animate-pulse shadow-[0_0_10px_white]"></div>
+                            <div class="absolute top-[35%] right-[25%] w-1 h-1 bg-gray-500 rounded-full"></div>
+                            <div class="absolute top-[45%] left-[48%] w-1 h-1 bg-gray-500 rounded-full"></div>
+                            <div class="absolute top-[60%] right-[35%] w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-75 shadow-[0_0_10px_white]"></div>
+                            <svg class="absolute inset-0 w-full h-full" style="pointer-events: none;">
+                                <line x1="20%" y1="30%" x2="48%" y2="45%" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"></line>
+                                <line x1="20%" y1="30%" x2="75%" y2="35%" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"></line>
+                                <line x1="75%" y1="35%" x2="65%" y2="60%" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"></line>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEVELOPER SECTION -->
+        <section id="developers" class="skew-target py-24 bg-[#050505] border-t border-white/5 relative z-20">
+            <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <span class="text-accent font-mono text-xs tracking-widest block mb-4">/// DEVELOPER EXPERIENCE</span>
+                    <h2 class="font-display font-bold text-4xl md:text-5xl mb-6 text-white scramble-text">Built for Builders</h2>
+                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">
+                        Stop fighting with complex control panels. Manage your infrastructure with our CLI, API, or Terraform provider.
+                    </p>
+                    <div class="space-y-6">
+                        <div class="group flex gap-4 p-4 border border-transparent hover:border-white/10 rounded-lg transition-all cursor-pointer hover-trigger">
+                            <div class="font-mono text-gray-600 text-sm group-hover:text-accent">01</div>
+                            <div>
+                                <h4 class="font-bold text-white">Instant Provisioning</h4>
+                                <p class="text-sm text-gray-500">Boot Ubuntu, Debian or AlmaLinux in 20s.</p>
+                            </div>
+                        </div>
+                        <div class="group flex gap-4 p-4 border border-transparent hover:border-white/10 rounded-lg transition-all cursor-pointer hover-trigger">
+                            <div class="font-mono text-gray-600 text-sm group-hover:text-accent">02</div>
+                            <div>
+                                <h4 class="font-bold text-white">API First</h4>
+                                <p class="text-sm text-gray-500">Full control over DNS, Firewalls and Backups.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative group hover-trigger">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-accent to-purple-600 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                    <div class="relative bg-[#0a0a0a] border border-white/10 rounded-lg p-6 font-mono text-sm shadow-2xl overflow-hidden min-h-[300px]">
+                        <div class="flex gap-2 mb-6 border-b border-white/5 pb-4">
+                            <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
+                        </div>
+                        <div class="text-gray-400">
+                            <span class="text-gray-600"># Deploy a scalable instance</span>
+                            <span class="text-purple-400">nexa</span> create instance \<br>
+                            &nbsp;&nbsp;--name <span class="text-green-400">"web-prod-01"</span> \<br>
+                            &nbsp;&nbsp;--image <span class="text-green-400">"ubuntu-22.04"</span> \<br>
+                            &nbsp;&nbsp;--size <span class="text-green-400">"c2.large"</span> \<br>
+                            &nbsp;&nbsp;--region <span class="text-green-400">"us-east"</span> \<br>
+                            &nbsp;&nbsp;--ssh-key <span class="text-blue-400">~/.ssh/id_rsa</span>
+                            <br><br>
+                            <span class="text-gray-500">&gt;&gt;&gt; Provisioning instance...</span><br>
+                            <span class="text-gray-500">&gt;&gt;&gt; IP Assigned: 192.168.4.22</span><br>
+                            <span class="text-white">&gt;&gt;&gt; Success! Server is live (12s)</span>
+                        </div>
+                        <div class="mt-2 text-accent animate-pulse">_</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PIPELINE SECTION (STICKY FIXED) -->
+        <section id="network" class="py-24 bg-[#050505] relative z-20 border-t border-white/5">
+            <div class="max-w-[1400px] mx-auto px-6">
+                <!-- IMPORTANT: items-start allows left col to stick, while right col scrolls -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 relative">
+                    
+                    <!-- Left Column: Sticky Visual -->
+                    <div class="order-2 lg:order-1 relative">
+                        <div class="sticky top-24 w-full aspect-square max-h-[60vh] bg-[#080808] border border-white/10 rounded-2xl overflow-hidden flex items-center justify-center p-10 group shadow-2xl">
+                            <!-- Background Grid -->
+                            <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                            
+                            <!-- Central Node -->
+                            <div class="relative w-40 h-40 border border-accent rounded-full flex items-center justify-center z-10 shadow-[0_0_50px_rgba(255,59,0,0.3)] bg-black/50 backdrop-blur-sm">
+                                <div class="w-32 h-32 bg-accent/10 rounded-full animate-pulse"></div>
+                                <div class="absolute text-white font-mono text-xs tracking-widest">NETWORK</div>
+                            </div>
+
+                            <!-- Orbiting Nodes -->
+                            <div class="absolute w-[70%] h-[70%] border border-white/5 rounded-full animate-spin-slow">
+                                <div class="w-4 h-4 bg-white rounded-full absolute -top-2 left-1/2 -translate-x-1/2 shadow-[0_0_15px_white]"></div>
+                            </div>
+                            <div class="absolute w-[90%] h-[90%] border border-white/5 rounded-full animate-reverse-spin">
+                                <div class="w-3 h-3 bg-accent rounded-full absolute -top-1.5 left-1/2 -translate-x-1/2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Scrollable Text Steps -->
+                    <div class="order-1 lg:order-2 py-20 pb-0">
+                        <span class="text-accent font-mono text-xs tracking-widest block mb-10">/// GLOBAL GRID</span>
+                        
+                        <div class="step-item mb-48 opacity-30 transition-opacity duration-500">
+                            <h3 class="text-4xl font-display font-bold mb-4 text-white">01. Deploy</h3>
+                            <p class="text-xl text-white leading-relaxed font-light">
+                                Spin up instances in seconds. Our automated orchestration layer handles the metal so you can focus on code.
+                            </p>
+                        </div>
+
+                        <div class="step-item mb-48 opacity-30 transition-opacity duration-500">
+                            <h3 class="text-4xl font-display font-bold mb-4 text-white">02. Scale</h3>
+                            <p class="text-xl text-white leading-relaxed font-light">
+                                Hit viral traffic? Scale vertically or horizontally instantly. Our load balancers distribute traffic across the grid.
+                            </p>
+                        </div>
+
+                        <div class="step-item opacity-30 transition-opacity duration-500">
+                            <h3 class="text-4xl font-display font-bold mb-4 text-white">03. Accelerate</h3>
+                            <p class="text-xl text-white leading-relaxed font-light">
+                                Content is cached at the edge. Your users connect to the nearest node, ensuring sub-20ms latency worldwide.
+                            </p>
+                        </div>
+                        
+                        <!-- Spacer to allow scroll past last item -->
+                        <div class="h-40"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRICING TABLE -->
+        <section id="pricing" class="skew-target py-32 px-6 bg-[#050505] relative z-20 border-t border-white/5">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="font-display font-bold text-4xl text-white text-center mb-16 scramble-text">Simple Pricing</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="border border-white/10 p-8 rounded-2xl hover:bg-white/5 transition-colors hover-trigger spotlight-card glass-panel">
+                        <div class="font-mono text-xs text-gray-500 mb-4 z-10 relative">/ SHARED</div>
+                        <div class="text-3xl font-bold text-white mb-6 z-10 relative">$5<span class="text-sm font-normal text-gray-500">/mo</span></div>
+                        <ul class="space-y-4 text-sm text-gray-300 mb-8 font-mono z-10 relative">
+                            <li class="flex gap-3"><span>✓</span> 1 vCPU Core</li>
+                            <li class="flex gap-3"><span>✓</span> 2GB RAM</li>
+                            <li class="flex gap-3"><span>✓</span> 50GB NVMe</li>
+                        </ul>
+                        <button class="w-full py-3 border border-white/20 rounded font-bold uppercase text-xs tracking-wider text-white hover:bg-white hover:text-black transition-all z-10 relative">Deploy Nano</button>
+                    </div>
+
+                    <div class="border border-accent bg-[#0a0a0a] p-8 rounded-2xl relative hover-trigger transform md:-translate-y-4 shadow-[0_0_30px_rgba(255,59,0,0.1)] spotlight-card">
+                        <div class="absolute top-0 right-0 bg-accent text-black text-[10px] font-bold px-3 py-1 uppercase rounded-bl-lg z-10">Best Value</div>
+                        <div class="font-mono text-xs text-accent mb-4 z-10 relative">/ CLOUD VPS</div>
+                        <div class="text-3xl font-bold text-white mb-6 z-10 relative">$20<span class="text-sm font-normal text-gray-500">/mo</span></div>
+                        <ul class="space-y-4 text-sm text-gray-300 mb-8 font-mono z-10 relative">
+                            <li class="flex gap-3"><span class="text-accent">✓</span> 4 vCPU Ryzen</li>
+                            <li class="flex gap-3"><span class="text-accent">✓</span> 8GB DDR5 RAM</li>
+                            <li class="flex gap-3"><span class="text-accent">✓</span> 200GB NVMe</li>
+                        </ul>
+                        <button class="w-full py-3 bg-accent text-black rounded font-bold uppercase text-xs tracking-wider hover:bg-white transition-all z-10 relative">Deploy VPS</button>
+                    </div>
+
+                    <div class="border border-white/10 p-8 rounded-2xl hover:bg-white/5 transition-colors hover-trigger spotlight-card glass-panel">
+                        <div class="font-mono text-xs text-gray-500 mb-4 z-10 relative">/ DEDICATED</div>
+                        <div class="text-3xl font-bold text-white mb-6 z-10 relative">Custom</div>
+                        <ul class="space-y-4 text-sm text-gray-300 mb-8 font-mono z-10 relative">
+                            <li class="flex gap-3"><span>✓</span> Bare Metal Access</li>
+                            <li class="flex gap-3"><span>✓</span> 40Gbps Uplinks</li>
+                            <li class="flex gap-3"><span>✓</span> Isolated Network</li>
+                        </ul>
+                        <button class="w-full py-3 border border-white/20 rounded font-bold uppercase text-xs tracking-wider text-white hover:bg-white hover:text-black transition-all z-10 relative">Contact Sales</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="bg-[#020202] pt-32 pb-10 px-6 border-t border-white/10 relative overflow-hidden">
+            <div class="absolute bottom-0 left-0 w-full overflow-hidden leading-none select-none pointer-events-none opacity-5">
+                <span class="text-[20vw] font-display font-black text-white whitespace-nowrap -ml-10">NEXA</span>
+            </div>
+
+            <div class="max-w-[1400px] mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-12">
+                <div>
+                    <h3 class="text-2xl font-display font-bold text-white mb-6">Start Hosting Today</h3>
+                    <div class="flex gap-4">
+                        <input type="email" placeholder="email@company.com" class="bg-white/5 border border-white/10 px-4 py-3 rounded text-sm w-64 focus:outline-none focus:border-accent text-white">
+                        <button class="bg-accent text-black px-6 py-3 rounded font-bold text-sm hover:bg-white transition-colors">CREATE ACCOUNT</button>
+                    </div>
+                </div>
+                
+                <div class="flex gap-12 text-sm text-gray-500 font-mono tracking-wider uppercase">
+                    <div class="flex flex-col gap-3">
+                        <span class="text-white">Services</span>
+                        <a href="#" class="hover:text-accent transition-colors">VPS</a>
+                        <a href="#" class="hover:text-accent transition-colors">Dedicated</a>
+                        <a href="#" class="hover:text-accent transition-colors">Storage</a>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <span class="text-white">Company</span>
+                        <a href="#" class="hover:text-accent transition-colors">SLA</a>
+                        <a href="#" class="hover:text-accent transition-colors">Privacy</a>
+                        <a href="#" class="hover:text-accent transition-colors">Terms</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="max-w-[1400px] mx-auto mt-20 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[10px] text-gray-600 font-mono uppercase">
+                <span>© 2025 NEXAHOST INC.</span>
+                <span class="mt-2 md:mt-0">NEW YORK / LONDON / SINGAPORE</span>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- 1. SETUP LENIS & SCROLL SKEW ---
+        const lenis = new Lenis({
+            lerp: 0.1,
+            smooth: true,
+            direction: 'vertical',
+        });
+        
+        let currentSkew = 0;
+        function raf(time) {
+            lenis.raf(time);
+            
+            // Interaction: Liquid Scroll Skew
+            // Only apply to specific sections with class 'skew-target'
+            const skewTarget = lenis.velocity * 0.1; 
+            currentSkew += (skewTarget - currentSkew) * 0.1;
+            const clampedSkew = Math.max(Math.min(currentSkew, 5), -5);
+            
+            document.querySelectorAll('.skew-target').forEach(el => {
+                el.style.transform = `skewY(${clampedSkew}deg)`;
+            });
+
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // --- 2. SPOTLIGHT INTERACTION ---
+        document.addEventListener('mousemove', (e) => {
+            document.querySelectorAll('.spotlight-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // --- 3. TEXT SCRAMBLE INTERACTION ---
+        class ScrambleText {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\/[]{}—=+*^?#________';
+                this.update = this.update.bind(this);
+            }
+            setText(newText) {
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                const promise = new Promise((resolve) => this.resolve = resolve);
+                this.queue = [];
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || '';
+                    const to = newText[i] || '';
+                    const start = Math.floor(Math.random() * 40);
+                    const end = start + Math.floor(Math.random() * 40);
+                    this.queue.push({ from, to, start, end });
+                }
+                cancelAnimationFrame(this.frameRequest);
+                this.frame = 0;
+                this.update();
+                return promise;
+            }
+            update() {
+                let output = '';
+                let complete = 0;
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.28) {
+                            char = this.randomChar();
+                            this.queue[i].char = char;
+                        }
+                        output += `<span class="opacity-50">${char}</span>`;
+                    } else {
+                        output += from;
+                    }
+                }
+                this.el.innerHTML = output;
+                if (complete === this.queue.length) {
+                    this.resolve();
+                } else {
+                    this.frameRequest = requestAnimationFrame(this.update);
+                    this.frame++;
+                }
+            }
+            randomChar() {
+                return this.chars[Math.floor(Math.random() * this.chars.length)];
+            }
+        }
+
+        const scrambleElements = document.querySelectorAll('.scramble-text');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const fx = new ScrambleText(el);
+                    fx.setText(el.innerText);
+                    observer.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        scrambleElements.forEach(el => observer.observe(el));
+
+        // --- 4. MAGNETIC BUTTONS ---
+        const buttons = document.querySelectorAll('.btn-magnetic');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.2 });
+            });
+            btn.addEventListener('mouseleave', () => {
+                gsap.to(btn, { x: 0, y: 0, duration: 0.2 });
+            });
+        });
+
+        // --- 5. ANIMATIONS ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        const counter = document.querySelector('.counter');
+        if(counter) {
+            gsap.from(counter, {
+                textContent: 90.00,
+                duration: 2,
+                ease: "power1.out",
+                snap: { textContent: 0.01 },
+                scrollTrigger: {
+                    trigger: counter,
+                    start: "top 85%",
+                    once: true
+                },
+                onUpdate: function() {
+                    this.targets()[0].innerHTML = parseFloat(this.targets()[0].textContent).toFixed(2);
+                }
+            });
+        }
+
+        const stepItems = document.querySelectorAll('.step-item');
+        stepItems.forEach((item) => {
+            gsap.to(item, {
+                scrollTrigger: {
+                    trigger: item,
+                    start: "top 80%", 
+                    end: "bottom center",
+                    onEnter: () => gsap.to(item, { opacity: 1, duration: 0.5 }),
+                    onLeave: () => gsap.to(item, { opacity: 0.3, duration: 0.5 }),
+                    onEnterBack: () => gsap.to(item, { opacity: 1, duration: 0.5 }),
+                    onLeaveBack: () => gsap.to(item, { opacity: 0.3, duration: 0.5 }),
+                }
+            });
+        });
+
+        gsap.utils.toArray('.glass-panel').forEach((panel, i) => {
+            gsap.from(panel, {
+                scrollTrigger: {
+                    trigger: panel,
+                    start: "top 90%"
+                },
+                y: 30,
+                opacity: 0,
+                duration: 0.8,
+                delay: i * 0.05,
+                ease: "power3.out"
+            });
+        });
+
+    </script>
+
+</body></html>
